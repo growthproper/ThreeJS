@@ -1,5 +1,5 @@
-# ThreeJS
 # ThreeJS를 활용한 토이
+# 사용기술 : Three.js, html5
 ### ThreeJS의 튜토리얼을 보고 도메인 호스팅에 옮겨 보고 싶은 호기심에서 시작된 3가지 토이
 ### 프로틴 클라우드
   * URL : www.polefast.com/pr.html
