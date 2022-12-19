@@ -1,0 +1,266 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Art Effect</title>
+    <link type="text/css" rel="stylesheet" href="main.css">
+    <style>
+        html, body {
+  height: 100%;
+  margin: 0;
+}
+#c {
+  width: 100%;
+  height: 100%;
+  display: block;
+}
+
+    </style>
+</head>
+<body>
+    <canvas id="c"></canvas>
+	<script id="vertexShader" type="x-shader/x-vertex">
+		precision highp float;
+
+		uniform float sineTime;
+
+		uniform mat4 modelViewMatrix;
+		uniform mat4 projectionMatrix;
+
+		attribute vec3 position;
+		attribute vec3 offset;
+		attribute vec4 color;
+		attribute vec4 orientationStart;
+		attribute vec4 orientationEnd;
+
+		varying vec3 vPosition;
+		varying vec4 vColor;
+
+		void main(){
+
+			vPosition = offset * max( abs( sineTime * 2.0 + 1.0 ), 0.5 ) + position;
+			vec4 orientation = normalize( mix( orientationStart, orientationEnd, sineTime ) );
+			vec3 vcV = cross( orientation.xyz, vPosition );
+			vPosition = vcV * ( 2.0 * orientation.w ) + ( cross( orientation.xyz, vcV ) * 2.0 + vPosition );
+
+			vColor = color;
+
+			gl_Position = projectionMatrix * modelViewMatrix * vec4( vPosition, 1.0 );
+
+		}
+
+	</script>
+
+	<script id="fragmentShader" type="x-shader/x-fragment">
+
+		precision highp float;
+
+		uniform float time;
+
+		varying vec3 vPosition;
+		varying vec4 vColor;
+
+		void main() {
+
+			vec4 color = vec4( vColor );
+			color.r += sin( vPosition.x * 10.0 + time ) * 0.5;
+
+			gl_FragColor = color;
+
+		}
+
+	</script>
+
+    <script type="module">
+        import * as THREE from 'https://threejsfundamentals.org/threejs/resources/threejs/r127/build/three.module.js';
+        import Stats from './node_modules/three/build/stats.module.js';
+		import { GUI } from './node_modules/three/build/dat.gui.module.js';
+
+        import {OrbitControls} from 'https://threejsfundamentals.org/threejs/resources/threejs/r127/examples/jsm/controls/OrbitControls.js';
+        let stats;
+
+		let renderer;
+
+        main();
+        animate();	
+
+
+        function main() {
+
+
+            const canvas = document.querySelector('#c');
+            const renderer = new THREE.WebGLRenderer({canvas});
+
+            const fov = 100;
+            const aspect = 100;  // the canvas default
+            const near = 0.1;
+            const far = 100;
+            const camera = new THREE.PerspectiveCamera(fov, aspect, near, far);
+            camera.position.z = 3;
+
+            const controls = new OrbitControls(camera, canvas);
+            controls.target.set(0, 0, 0);
+            controls.update();
+
+            const scene = new THREE.Scene();
+
+            {
+                const loader = new THREE.TextureLoader();
+                const texture = loader.load(
+                  'images/venice_sunset_4k.jpg',
+                  () => {
+                    const rt = new THREE.WebGLCubeRenderTarget(texture.image.height);
+                    rt.fromEquirectangularTexture(renderer, texture);
+                    scene.background = rt.texture;
+                  });
+              }
+
+            // geometry
+
+			const vector = new THREE.Vector4();
+
+			const instances = 50000;
+
+			const positions = [];
+			const offsets = [];
+			const colors = [];
+			const orientationsStart = [];
+			const orientationsEnd = [];
+
+			positions.push( 0.04, - 0.04, 0 );
+			positions.push( - 0.04, 0.04, 0 );
+			positions.push( 0, 0, 0.04 ); 
+  
+  
+            for ( let i = 0; i < instances; i ++ ) {
+
+				// offsets
+
+				offsets.push( Math.random() - 0.5, Math.random() - 0.5, Math.random() - 0.5 );
+
+				// colors
+
+				colors.push( Math.random(), Math.random(), Math.random(), Math.random() );
+
+				// orientation start
+
+				vector.set( Math.random() * 0.5, Math.random() * 0.5, Math.random() * 0.5, Math.random() * 0.5 );
+				vector.normalize();
+
+				orientationsStart.push( vector.x, vector.y, vector.z, vector.w );
+
+				// orientation end
+
+				vector.set( Math.random() * 0.5, Math.random() * 0.5, Math.random() * 0.5, Math.random() * 0.5 );
+				vector.normalize();
+
+				orientationsEnd.push( vector.x, vector.y, vector.z, vector.w );
+
+			}
+
+
+
+            const geometry = new THREE.InstancedBufferGeometry();
+			geometry.instanceCount = instances; // set so its initalized for dat.GUI, will be set in first draw otherwise
+
+			geometry.setAttribute( 'position', new THREE.Float32BufferAttribute( positions, 3 ) );
+
+			geometry.setAttribute( 'offset', new THREE.InstancedBufferAttribute( new Float32Array( offsets ), 3 ) );
+			geometry.setAttribute( 'color', new THREE.InstancedBufferAttribute( new Float32Array( colors ), 4 ) );
+			geometry.setAttribute( 'orientationStart', new THREE.InstancedBufferAttribute( new Float32Array( orientationsStart ), 4 ) );
+			geometry.setAttribute( 'orientationEnd', new THREE.InstancedBufferAttribute( new Float32Array( orientationsEnd ), 4 ) );
+ 
+
+            // material
+
+			const material = new THREE.RawShaderMaterial( {
+
+				uniforms: {
+					"time": { value: 1.0 },
+					"sineTime": { value: 1.0 }
+				},
+				vertexShader: document.getElementById( 'vertexShader' ).textContent,
+				fragmentShader: document.getElementById( 'fragmentShader' ).textContent,
+				side: THREE.DoubleSide,
+				transparent: true
+
+			} );
+
+            const mesh = new THREE.Mesh( geometry, material );
+			scene.add( mesh );
+            
+  
+
+            function onWindowResize() {
+
+                camera.aspect = window.innerWidth / window.innerHeight;
+                camera.updateProjectionMatrix();
+    
+                renderer.setSize( window.innerWidth, window.innerHeight );
+    
+            }
+    
+
+
+  function resizeRendererToDisplaySize(renderer) {
+    const canvas = renderer.domElement;
+    const width = canvas.clientWidth;
+    const height = canvas.clientHeight;
+    const needResize = canvas.width !== width || canvas.height !== height;
+    if (needResize) {
+      renderer.setSize(width, height, false);
+    }
+    return needResize;
+  }
+
+
+  function animate() {
+
+    requestAnimationFrame( animate );
+
+    render();
+    stats.update();
+
+}
+
+  function render() {
+    const time = performance.now();
+
+        const object = scene.children[ 0 ];
+
+        object.rotation.y = time * 0.0005;
+        object.material.uniforms[ "time" ].value = time * 0.005;
+        object.material.uniforms[ "sineTime" ].value = Math.sin( object.material.uniforms[ "time" ].value * 0.05 );
+
+    if (resizeRendererToDisplaySize(renderer)) {
+      const canvas = renderer.domElement;
+      camera.aspect = canvas.clientWidth / canvas.clientHeight;
+      camera.updateProjectionMatrix();
+    }
+
+    // cubes.forEach((cube, ndx) => {
+    //   const speed = 1 + ndx * .1;
+    //   const rot = time * speed;
+    //   cube.rotation.x = rot;
+    //   cube.rotation.y = rot;
+    // });
+
+    renderer.render(scene, camera);
+
+    requestAnimationFrame(render);
+  }
+
+  requestAnimationFrame(render);
+  window.addEventListener( 'resize', onWindowResize );
+
+}
+ 
+
+
+	
+		
+    </script>
+</body>
+</html>
