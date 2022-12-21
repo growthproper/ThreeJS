@@ -5,7 +5,7 @@
 ### 파티클 유니버스
   * URL : http://www.polefast.com/particle2.html
   * 이 URL을 타고 들어가면 배경음악이 나오지 않는다.(구글 정책 제한)
-  * www.polefast.com 에서 article Universe를 클릭하면 배경음악까지 재생됨.
+  * www.polefast.com 에서 Particle Universe를 클릭하면 배경음악까지 재생됨.
   * 파티클 유니버스는 파티클 소스에 배경을 결합
   * 파티클 소스는 크기와 밀집도를 조정하였음
   * 배경음악까지 삽입하여 우주의 별이 빛나는 효과 연출
