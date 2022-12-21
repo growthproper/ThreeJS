@@ -1,7 +1,14 @@
 # ThreeJS를 활용한 토이
 # 사용기술 : Three.js, html5
-# 목적 : ThreeJS의 튜토리얼을 보고 도메인 호스팅에 옮겨 보고 싶은 호기심에서 시작된 3가지 토이
+# 목적 : ThreeJS의 튜토리얼을 보고 도메인 호스팅에 옮겨 보고 싶은 호기심에서 시작된 4가지 토이 코딩
 
+### 파티클 유니버스
+  * URL : www.polefast.com/particle2.html
+  * 파티클 유니버스는 파티클 소스에 배경을 결합
+  * 파티클 소스는 크기와 밀집도를 조정하였음
+  * 배경음악까지 삽입하여 우주의 별이 빛나는 효과 연출
+  * 배경은 freepik 사이트를 활용
+  ![image](https://user-images.githubusercontent.com/89292360/208823970-db881110-f8a2-461c-96af-4874e6e2f6f2.png)
 
 ### 아트 이펙트
   * URL : www.polefast.com/006.html
